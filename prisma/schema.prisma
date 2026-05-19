@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum EventVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum ParticipationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  BANNED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  password    String
+  role        Role     @default(USER)
+  avatar      String?
+  bio         String?
+  notifyEmail Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events          Event[]
+  participations  Participation[]
+  sentInvitations Invitation[]    @relation("InvitationSender")
+  invitations     Invitation[]    @relation("InvitationReceiver")
+  reviews         Review[]
+  payments        Payment[]
+}
+
+model Event {
+  id              String          @id @default(cuid())
+  title           String
+  slug            String          @unique
+  description     String
+  venue           String?
+  eventLink       String?
+  date            DateTime
+  time            String
+  visibility      EventVisibility @default(PUBLIC)
+  registrationFee Float           @default(0)
+  isFeatured      Boolean         @default(false)
+  organizerId     String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  organizer      User            @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  participations Participation[]
+  invitations    Invitation[]
+  reviews        Review[]
+  payments       Payment[]
+}
+
+model Participation {
+  id        String              @id @default(cuid())
+  userId    String
+  eventId   String
+  status    ParticipationStatus @default(PENDING)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  payment Payment?
+
+  @@unique([userId, eventId])
+}
+
+model Invitation {
+  id         String           @id @default(cuid())
+  senderId   String
+  receiverId String
+  eventId    String
+  status     InvitationStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  sender   User     @relation("InvitationSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User     @relation("InvitationReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  payment  Payment?
+
+  @@unique([receiverId, eventId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  userId          String
+  eventId         String
+  amount          Float
+  status          PaymentStatus @default(UNPAID)
+  stripeSessionId String?       @unique
+  stripePaymentId String?
+  participationId String?       @unique
+  invitationId    String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participation Participation? @relation(fields: [participationId], references: [id])
+  invitation    Invitation?    @relation(fields: [invitationId], references: [id])
+}
