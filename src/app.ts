@@ -9,6 +9,7 @@ import paymentRoutes from "./module/payment/payment.routes";
 import adminRoutes from "./module/admin/admin.routes";
 import reviewRoutes from "./module/review/review.routes";
 import participationRoutes from "./module/participation/participation.routes";
+import invitationRoutes from "./module/invitation/invitation.routes";
 import { config } from "./config";
 import { errorHandler } from "./middlewares/errorHandler";
 
@@ -33,6 +34,7 @@ app.get("/health", (_req, res) => res.json({ status: "ok", env: config.nodeEnv }
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/events", eventRoutes);
 app.use("/api/v1/participations", participationRoutes);
+app.use("/api/v1/invitations", invitationRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
 
