@@ -5,6 +5,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import authRoutes from "./module/auth/auth.routes";
 import eventRoutes from "./module/event/event.routes";
+import paymentRoutes from "./module/payment/payment.routes";
 import adminRoutes from "./module/admin/admin.routes";
 import reviewRoutes from "./module/review/review.routes";
 import { config } from "./config";
@@ -20,6 +21,8 @@ app.use(
   }),
 );
 app.use(morgan(config.nodeEnv === "development" ? "dev" : "combined"));
+app.use("/api/v1/payments", paymentRoutes);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
