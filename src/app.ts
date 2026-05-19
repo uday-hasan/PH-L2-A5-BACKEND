@@ -10,6 +10,7 @@ import adminRoutes from "./module/admin/admin.routes";
 import reviewRoutes from "./module/review/review.routes";
 import participationRoutes from "./module/participation/participation.routes";
 import invitationRoutes from "./module/invitation/invitation.routes";
+import userRoutes from "./module/user/user.routes";
 import { config } from "./config";
 import { errorHandler } from "./middlewares/errorHandler";
 
@@ -37,6 +38,7 @@ app.use("/api/v1/participations", participationRoutes);
 app.use("/api/v1/invitations", invitationRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
+app.use("/api/v1/users", userRoutes);
 
 app.use((_req, res) => res.status(404).json({ success: false, message: "Route not found" }));
 app.use(errorHandler);
