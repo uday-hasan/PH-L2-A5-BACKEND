@@ -5,6 +5,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
 import { config } from "./config";
+import { errorHandler } from "./middlewares/errorHandler";
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.use(cookieParser());
 app.get("/health", (_req, res) => res.json({ status: "ok", env: config.nodeEnv }));
 
 app.use((_req, res) => res.status(404).json({ success: false, message: "Route not found" }));
+app.use(errorHandler);
 
 export default app;
