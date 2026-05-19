@@ -7,13 +7,11 @@ import { Role } from "../../../prisma/generated/prisma/client.js";
 
 const router = Router();
 
-// Public
 router.get("/", eventController.getAll);
 router.get("/upcoming", eventController.getUpcoming);
 router.get("/featured", eventController.getFeatured);
 router.get("/:slug", eventController.getBySlug);
 
-// Authenticated
 router.use(protect);
 router.post("/", validate(createEventSchema), eventController.create);
 router.get("/dashboard/my-events", eventController.getMyEvents);
