@@ -8,6 +8,7 @@ import eventRoutes from "./module/event/event.routes";
 import paymentRoutes from "./module/payment/payment.routes";
 import adminRoutes from "./module/admin/admin.routes";
 import reviewRoutes from "./module/review/review.routes";
+import participationRoutes from "./module/participation/participation.routes";
 import { config } from "./config";
 import { errorHandler } from "./middlewares/errorHandler";
 
@@ -31,8 +32,9 @@ app.get("/health", (_req, res) => res.json({ status: "ok", env: config.nodeEnv }
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/events", eventRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/reviews", reviewRoutes);
+app.use("/api/v1/participations", participationRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
 
 app.use((_req, res) => res.status(404).json({ success: false, message: "Route not found" }));
 app.use(errorHandler);
