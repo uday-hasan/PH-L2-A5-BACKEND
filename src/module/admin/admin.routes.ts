@@ -1,10 +1,7 @@
 import { Router } from "express";
 import { adminController } from "./admin.controller";
-import {
-  protect,
-  restrictTo,
-} from "../../../../../planora/planora-backend/src/middlewares/auth.middleware";
-import { Role } from "../../../../../planora/planora-backend/prisma/generated/prisma/client.js";
+import { protect, restrictTo } from "../../middlewares/auth.middleware";
+import { Role } from "../../../prisma/generated/prisma/enums";
 
 const router = Router();
 

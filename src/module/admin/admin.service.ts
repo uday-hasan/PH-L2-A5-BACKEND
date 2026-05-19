@@ -1,5 +1,5 @@
-import { prisma } from "../../../../../planora/planora-backend/src/lib/prisma";
-import { ApiError } from "../../../../../planora/planora-backend/src/utils/ApiError";
+import { prisma } from "../../lib/prisma";
+import { ApiError } from "../../utils/ApiError";
 
 export const adminService = {
   async getStats() {
