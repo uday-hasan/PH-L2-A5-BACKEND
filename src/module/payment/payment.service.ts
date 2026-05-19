@@ -1,0 +1,59 @@
+import {
+  InvitationStatus,
+  ParticipationStatus,
+  PaymentStatus,
+} from "../../../prisma/generated/prisma/client.js";
+import type Stripe from "stripe";
+import { prisma } from "../../lib/prisma";
+import { stripe } from "../../lib/stripe";
+import { config } from "../../config";
+import { ApiError } from "../../utils/ApiError";
+
+export const paymentService = {
+  constructWebhookEvent(payload: Buffer, sig: string): Stripe.Event {
+    try {
+      return stripe.webhooks.constructEvent(payload, sig, config.stripe.webhookSecret);
+    } catch {
+      throw new ApiError(400, "Invalid webhook signature");
+    }
+  },
+
+  async handleCheckoutComplete(session: Stripe.Checkout.Session) {
+    const payment = await prisma.payment.findUnique({
+      where: { stripeSessionId: session.id },
+    });
+    if (!payment) return;
+
+    // Mark payment as PAID
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { status: PaymentStatus.PAID, stripePaymentId: session.payment_intent as string },
+    });
+
+    // Update participation if linked
+    if (payment.participationId) {
+      await prisma.participation.update({
+        where: { id: payment.participationId },
+        data: { status: ParticipationStatus.PENDING }, // still needs host approval for private events
+      });
+    }
+
+    // Update invitation if linked
+    if (payment.invitationId) {
+      await prisma.invitation.update({
+        where: { id: payment.invitationId },
+        data: { status: InvitationStatus.ACCEPTED },
+      });
+    }
+  },
+
+  async getMyPayments(userId: string) {
+    return prisma.payment.findMany({
+      where: { userId },
+      include: {
+        event: { select: { id: true, title: true, slug: true, date: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+};
