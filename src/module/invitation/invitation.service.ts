@@ -3,6 +3,7 @@ import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
 import { stripe } from "../../lib/stripe";
 import { config } from "../../config";
+import { Request } from "express";
 
 export const invitationService = {
   async sendInvitation(eventId: string, receiverEmail: string, senderId: string) {
@@ -86,9 +87,10 @@ export const invitationService = {
     return { invitation, checkoutUrl: session.url };
   },
 
-  async getMyInvitations(userId: string) {
+  async getMyInvitations(userId: string, req: Request) {
+    const status = req.params.status as InvitationStatus | "ALL";
     return prisma.invitation.findMany({
-      where: { receiverId: userId },
+      where: { receiverId: userId, ...(status !== "ALL" ? { status } : {}) },
       include: {
         event: {
           select: {

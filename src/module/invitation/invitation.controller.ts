@@ -30,7 +30,7 @@ export const invitationController = {
   }),
 
   getMyInvitations: catchAsync(async (req: Request, res: Response) => {
-    const data = await invitationService.getMyInvitations(req.user!.id);
+    const data = await invitationService.getMyInvitations(req.user!.id, req);
     ApiResponse.success(res, data);
   }),
 
