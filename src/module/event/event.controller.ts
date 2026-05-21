@@ -48,7 +48,7 @@ export const eventController = {
 
   delete: catchAsync(async (req: Request, res: Response) => {
     await eventService.delete(req.params.slug as string, req.user!.id, req.user!.role);
-    ApiResponse.noContent(res);
+    ApiResponse.success(res, null, "Event deleted");
   }),
 
   setFeatured: catchAsync(async (req: Request, res: Response) => {
