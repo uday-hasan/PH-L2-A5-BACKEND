@@ -18,6 +18,6 @@ export const userController = {
 
   deleteUser: catchAsync(async (req: Request, res: Response) => {
     await userService.deleteUser(req.params.id as string);
-    ApiResponse.noContent(res);
+    ApiResponse.success(res, null, "User deleted successfully", 200);
   }),
 };

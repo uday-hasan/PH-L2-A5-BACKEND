@@ -21,7 +21,7 @@ export const reviewController = {
 
   delete: catchAsync(async (req: Request, res: Response) => {
     await reviewService.delete(req.params.reviewId as string, req.user!.id, req.user!.role);
-    ApiResponse.noContent(res);
+    ApiResponse.success(res, null, "Review deleted successfully", 200);
   }),
 
   getMyReviews: catchAsync(async (req: Request, res: Response) => {
