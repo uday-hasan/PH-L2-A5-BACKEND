@@ -68,7 +68,8 @@ export const invitationService = {
           quantity: 1,
         },
       ],
-      success_url: `${config.clientUrl}/events/${event.id}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${config.clientUrl}/success`,
+      // success_url: `${config.clientUrl}/events/${event.id}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${config.clientUrl}/dashboard/invitations`,
       metadata: { invitationId, userId, eventId: event.id },
     });
@@ -88,7 +89,8 @@ export const invitationService = {
   },
 
   async getMyInvitations(userId: string, req: Request) {
-    const status = req.params.status as InvitationStatus | "ALL";
+    const status = req.query.status as InvitationStatus | "ALL";
+    console.log({ status });
     return prisma.invitation.findMany({
       where: { receiverId: userId, ...(status !== "ALL" ? { status } : {}) },
       include: {
