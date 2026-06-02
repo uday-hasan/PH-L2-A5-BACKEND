@@ -10,4 +10,5 @@ export const config = {
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
   },
   clientUrl: process.env.CLIENT_URL || "http://localhost:3000",
+  cookieDomain: process.env.COOKIE_DOMAIN || "",
 };
