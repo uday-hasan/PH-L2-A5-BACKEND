@@ -32,13 +32,23 @@ export const paymentService = {
 
     // Update participation if linked
     if (payment.participationId) {
+      const participation = await prisma.participation.findUnique({
+        where: { id: payment.participationId },
+        include: { event: true },
+      });
+
+      // If it's a private event, keep as PENDING (needs host approval)
+      // If it's a public event or organizer invitation, set to APPROVED
+      const isPrivate = participation?.event.visibility === "PRIVATE";
+      const newStatus = isPrivate ? ParticipationStatus.PENDING : ParticipationStatus.APPROVED;
+
       await prisma.participation.update({
         where: { id: payment.participationId },
-        data: { status: ParticipationStatus.PENDING }, // still needs host approval for private events
+        data: { status: newStatus },
       });
     }
 
-    // Update invitation if linked
+    // Update invitation if linked (for backward compatibility)
     if (payment.invitationId) {
       await prisma.invitation.update({
         where: { id: payment.invitationId },

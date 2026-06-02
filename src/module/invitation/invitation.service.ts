@@ -1,4 +1,9 @@
-import { InvitationStatus, PaymentStatus, Role } from "../../../prisma/generated/prisma/client.js";
+import {
+  InvitationStatus,
+  PaymentStatus,
+  ParticipationStatus,
+  Role,
+} from "../../../prisma/generated/prisma/client.js";
 import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
 import { stripe } from "../../lib/stripe";
@@ -15,6 +20,11 @@ export const invitationService = {
     const receiver = await prisma.user.findUnique({ where: { email: receiverEmail } });
     if (!receiver) throw new ApiError(404, "User not found");
     if (receiver.id === senderId) throw new ApiError(400, "Cannot invite yourself");
+
+    const existing = await prisma.invitation.findUnique({
+      where: { receiverId_eventId: { receiverId: receiver.id, eventId } },
+    });
+    if (existing) throw new ApiError(400, "Invitation already sent to this user for this event");
 
     return prisma.invitation.create({
       data: { senderId, receiverId: receiver.id, eventId },
@@ -47,6 +57,21 @@ export const invitationService = {
     const isPaid = event.registrationFee > 0;
 
     if (!isPaid) {
+      // Create participation record with APPROVED status (since it's an invitation from organizer)
+      const existing = await prisma.participation.findUnique({
+        where: { userId_eventId: { userId, eventId: event.id } },
+      });
+
+      if (!existing) {
+        await prisma.participation.create({
+          data: {
+            userId,
+            eventId: event.id,
+            status: ParticipationStatus.APPROVED, // Organizer invitation = auto-approved
+          },
+        });
+      }
+
       const updated = await prisma.invitation.update({
         where: { id: invitationId },
         data: { status: InvitationStatus.ACCEPTED },
@@ -54,7 +79,29 @@ export const invitationService = {
       return { invitation: updated, checkoutUrl: null };
     }
 
-    // Paid event → Stripe checkout
+    // Paid event → Create participation in PENDING status and update invitation to ACCEPTED
+    const existing = await prisma.participation.findUnique({
+      where: { userId_eventId: { userId, eventId: event.id } },
+    });
+
+    let participation = existing;
+    if (!existing) {
+      participation = await prisma.participation.create({
+        data: {
+          userId,
+          eventId: event.id,
+          status: ParticipationStatus.PENDING, // Will be approved after payment
+        },
+      });
+    }
+
+    // Update invitation to ACCEPTED immediately
+    const updated = await prisma.invitation.update({
+      where: { id: invitationId },
+      data: { status: InvitationStatus.ACCEPTED },
+    });
+
+    // Stripe checkout
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -68,10 +115,9 @@ export const invitationService = {
           quantity: 1,
         },
       ],
-      success_url: `${config.clientUrl}/success`,
-      // success_url: `${config.clientUrl}/events/${event.id}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${config.clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&event_id=${event.id}&event_title=${encodeURIComponent(event.title)}&event_date=${event.date.toISOString()}&amount=${event.registrationFee}`,
       cancel_url: `${config.clientUrl}/dashboard/invitations`,
-      metadata: { invitationId, userId, eventId: event.id },
+      metadata: { participationId: participation?.id!, userId, eventId: event.id },
     });
 
     await prisma.payment.create({
@@ -81,11 +127,11 @@ export const invitationService = {
         amount: event.registrationFee,
         status: PaymentStatus.UNPAID,
         stripeSessionId: session.id,
-        invitationId,
+        participationId: participation?.id!,
       },
     });
 
-    return { invitation, checkoutUrl: session.url };
+    return { invitation: updated, checkoutUrl: session.url };
   },
 
   async getMyInvitations(userId: string, req: Request) {
