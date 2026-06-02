@@ -24,8 +24,8 @@ app.use(
   }),
 );
 app.use(morgan(config.nodeEnv === "development" ? "dev" : "combined"));
-app.use("/api/v1/payments", paymentRoutes);
 
+app.use("/api/v1/payments", paymentRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

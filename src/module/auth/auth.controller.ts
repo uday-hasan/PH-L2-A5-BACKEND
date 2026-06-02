@@ -18,7 +18,11 @@ export const authController = {
   }),
 
   logout: catchAsync(async (_req: Request, res: Response) => {
-    res.clearCookie("token");
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+    });
     ApiResponse.success(res, null, "Logged out successfully");
   }),
 
