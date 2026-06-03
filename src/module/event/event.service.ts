@@ -112,11 +112,11 @@ export const eventService = {
   },
 
   async delete(slug: string, userId: string, userRole: Role) {
-    const event = await prisma.event.findUnique({ where: { slug } });
+    const event = await prisma.event.findUnique({ where: { id: slug } });
     if (!event) throw new ApiError(404, `Event not found`);
     if (event.organizerId !== userId && userRole !== Role.ADMIN)
       throw new ApiError(403, "Forbidden");
-    await prisma.event.delete({ where: { slug } });
+    await prisma.event.delete({ where: { id: slug } });
   },
 
   async setFeatured(slug: string) {
